@@ -36,7 +36,15 @@ public class HudRenderer {
             int textY = y+4;
             guiGraphics.drawString(mc.font,countText,textX,textY,0xFFFFFF);
         }
+
         renderArmourHUD(guiGraphics,mc,screenWidth,screenHeight);
+        renderPotEffects(guiGraphics,mc);
+
+        //fps display
+        String fpsText=Minecraft.getInstance().fpsString.split(" ")[0]+" fps";
+        int fpsX =screenWidth-mc.font.width(fpsText)-5;
+        int fpsY =5;
+        guiGraphics.drawString(mc.font,fpsText,fpsX,fpsY,0xFFFFFF);
     }
 
     @SubscribeEvent
@@ -71,7 +79,7 @@ public class HudRenderer {
         int panelWidth=cols*18+8;
         int panelHeight=rows*18+8;
         int startX=event.getX();
-        int startY=event.getY()-panelHeight-15;
+        int startY=event.getY()-panelHeight-20;
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0,0,400);
         //bg
@@ -137,6 +145,49 @@ public class HudRenderer {
                 guiGraphics.drawString(mc.font,durabilityText,textX,textY,color);
                 guiGraphics.renderItem(armourPiece,x,y);
             }
+        }
+    }
+
+    private static String toRoman(int n) {//bruh ts so long
+        String[] thousands={"","M","MM","MMM"};
+        String[] hundreds={"","C","CC","CCC","CD","D","DC","DCC","DCCC","CM"};
+        String[] tens={"","X","XX","XXX","XL","L","LX","LXX","LXXX","XC"};
+        String[] ones={"","I","II","III","IV","V","VI","VII","VIII","IX"};
+        return thousands[n/1000]+hundreds[(n%1000)/100]+tens[(n%100)/10]+ones[n%10];
+    }
+
+    private static void renderPotEffects(GuiGraphics guiGraphics, Minecraft mc) {
+        java.util.Collection<net.minecraft.world.effect.MobEffectInstance> effects=mc.player.getActiveEffects();
+        if (effects.isEmpty()) return;
+        int x = 5;
+        int y = 5;
+        int panelWidth=120;
+        int rowHeight=22;
+        int padding=4;
+        for (net.minecraft.world.effect.MobEffectInstance effectInstance:effects) {
+            net.minecraft.world.effect.MobEffect effect = effectInstance.getEffect();
+            guiGraphics.fill(x,y,x+panelWidth,y+rowHeight,0xAA222222);
+            com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0,net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS);
+            net.minecraft.client.renderer.texture.TextureAtlasSprite sprite =mc.getMobEffectTextures().get(effect);
+            if (sprite!=null) {
+                guiGraphics.blit(x+padding,y+3,0,16,16,sprite);
+            }
+            String name =net.minecraft.network.chat.Component.translatable(effect.getDescriptionId()).getString();
+            int amplifier=effectInstance.getAmplifier();
+            if (amplifier>0) {
+                name+=" "+toRoman(amplifier+1);
+            }
+            guiGraphics.drawString(mc.font,name,x+padding+18,y+3,0xFFFFFF,false);
+            int duration=effectInstance.getDuration();
+            String durationText;
+            if (duration==Integer.MAX_VALUE) {
+                durationText="∞";
+            } else {
+                int seconds =duration/20;
+                durationText=String.format("%d:%02d",seconds/60,seconds%60);
+            }
+            guiGraphics.drawString(mc.font,durationText,x+padding+18,y+12,0xAAAAAA,false);
+            y+=rowHeight+2;
         }
     }
 }
