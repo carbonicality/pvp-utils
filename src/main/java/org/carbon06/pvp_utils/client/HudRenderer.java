@@ -42,8 +42,8 @@ public class HudRenderer {
 
         //fps display
         String fpsText=Minecraft.getInstance().fpsString.split(" ")[0]+" fps";
-        int fpsX =screenWidth-mc.font.width(fpsText)-5;
-        int fpsY =5;
+        int fpsX =5;
+        int fpsY =screenHeight-mc.font.lineHeight-5;
         guiGraphics.drawString(mc.font,fpsText,fpsX,fpsY,0xFFFFFF);
     }
 
